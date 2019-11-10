@@ -1,31 +1,65 @@
 <template>
 	<v-container>
-		<v-tabs color='#78c800'>
-			<v-tab @click='pos = "Adjective"'><a>Adjective</a></v-tab>
-			<v-tab @click='pos = "Noun"'><a>Noun</a></v-tab>
-			<v-tab @click='pos = "Verb"'><a>Verb</a></v-tab>
-			<v-tab @click='pos = "Proper noun"'><a>Proper noun</a></v-tab>
-			<v-tab @click='pos = "Pronoun"'><a>Pronoun</a></v-tab>
-			<v-tab @click='pos = "Adverb"'><a>Adverb</a></v-tab>
-			<v-tab @click='pos = "Preposition"'><a>Preposition</a></v-tab>
-			<v-tab @click='pos = "Determiner"'><a>Determiner</a></v-tab>
-			<v-tab @click='pos = "Numeral"'><a>Numeral</a></v-tab>
-			<v-tab @click='pos = "Interjection"'><a>Interjection</a></v-tab>
-			<v-tab @click='pos = "Conjunction"'><a>Conjunction</a></v-tab>
-		</v-tabs>
+
 		<v-layout
-			text-center
 			wrap
+            class='py-5'
 		>
-		<v-container fluid>
-			<v-row class='word-container' v-for='(word,index) in filteredWords' :key='index'>
-				<v-col class='word' cols='6'  
-					@click='search(index)'>
-					<h3>{{ word.normalized_string }} </h3>
+
+        <v-select 
+            class='pa-3'
+            :items="langs"
+            v-model='lang'
+            label="Language"
+        ></v-select>
+
+        <v-select 
+            class='pa-3'
+            :items="strengths"
+            v-model='strength'
+            label="Strength"
+        ></v-select>
+
+        <v-select 
+            class='pa-3'
+            :items="types"
+            v-model='type'
+            label="Type"
+        ></v-select>
+
+		<v-container v-if='lang == "es"' fluid class='my-5'>
+			<v-row class='word-container' v-for='(word,index) in filteredWords' :key='index' @click='getDetails(word)'>
+
+				<v-col class='word' cols='3'>
+					<h2>{{ word.word_string }}</h2>
+                </v-col>
+
+                <v-col cols='2'>
 					<p>{{ word.pos }}</p>
 				</v-col>
-				<v-col v-if='word.translation' class='translation' cols='6'>
-					<h3>{{ word.translation }}</h3>
+
+				<v-col class='translation' cols='3'>
+					<p >{{ word.translation }}</p>
+                </v-col>
+                <v-col class='sentence' cols='3'>
+					<p v-if='word.sentence'>"<em v-html='word.sentence'></em>"</p>
+				</v-col>
+			</v-row>
+		</v-container>
+
+        <v-container v-if='lang == "en"' fluid>
+			<v-row class='word-container' v-for='(word,index) in filteredWords' :key='index'>
+
+				<v-col class='word' cols='3'>
+					<h2>{{ word.translation }} </h2>
+                </v-col>
+
+                <v-col cols='3'>
+					<p>{{ word.pos }}</p>
+				</v-col>
+
+				<v-col class='translation' cols='6'>
+					<h3>{{ word.word_string }}</h3>
 				</v-col>
 			</v-row>
 		</v-container>
@@ -36,113 +70,152 @@
 
 <script>
 import axios from 'axios'
-import { default as words } from '../words'
+// import { default as words } from '../words'
 
 export default {
-	name: 'HelloWorld',
+	name: 'Words',
 
 	data: () => ({
-		pos: null,
-		words: words.vocab_overview.map(w => {
-			w.translation = null;
-			return w
-		}).sort((a, b) => a.strength - b.strength)
+        words: [],
+        langs: ['en', 'es'],
+        strengths: ['All', 'Weak', 'Strong'],
+        types: ['All','Adjective', 'Noun', 'Verb', 'Proper noun', 'Pronoun', 'Adverb', 'Preposition', 'Determiner', 'Numeral', 'Interjection', 'Conjunction'],
+        type: 'All',
+        lang: 'es',
+        strength: 'All'
 	}),
 	computed: {
 		filteredWords() {
 			let vm = this;
 			if (!vm || !vm.words) return []
-			return vm.words.filter(w => !vm.pos || w.pos == vm.pos)
-		}
-	},
-	methods: {
-		search (index) {
-			let vm = this;
+            return vm.words.filter(w => {
+                let type = !vm.type || vm.type == 'All' || w.pos == vm.type;
+                let strength;
 
-			var data = `source=es&q=${encodeURI(vm.filteredWords[index].normalized_string)}&target=en`;
+                if (!vm.strength || vm.strength == 'All') {
+                    strength = true
+                }
+                else if (vm.strength  == 'Strong') {
+                    strength = w.strength >= 0.5
+                } else {
+                    strength = w.strength <= 0.5
+                }
 
-			var xhr = new XMLHttpRequest();
-			xhr.withCredentials = true;
+                return type && strength;
+            })
+        },
+        parsedWords() {
+            let vm = this;
+            return Object.keys(vm.words)
+        }
+    },
+    methods: {
+        capitalize(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        },
+        getDetails(word) {
+            let url = `https://www.duolingo.com/api/1/dictionary_page?lexeme_id=${word.lexeme_id}&use_cache=false&_=1573392387059`;
+            axios.get(url)
+            .then(r => word.sentence = r.data.alternative_forms[0].example_sentence)
+        }
+    },
+	mounted() {
+        let vm = this;
+        
+        axios.get('http://localhost:5555/words')
+            .then(res => {
+                var words = res.data.vocab_overview
 
-			xhr.addEventListener("readystatechange", function () {
-				if (this.readyState === this.DONE) {
-					console.log(vm.filteredWords[index])
-					vm.filteredWords[index].translation = JSON.parse(this.responseText).data.translations[0].translatedText;
-					console.log(vm.filteredWords[index])
-				}
-			});
-
-			xhr.open("POST", "https://google-translate1.p.rapidapi.com/language/translate/v2");
-			xhr.setRequestHeader("x-rapidapi-host", "google-translate1.p.rapidapi.com");
-			xhr.setRequestHeader("x-rapidapi-key", "b82a516a4bmshd9e853bb88fc02bp1f25a5jsn6a067c1ea61d");
-			xhr.setRequestHeader("content-type", "application/x-www-form-urlencoded");
-
-			xhr.send(data);
-		}
-	},
-	mounted: () => {
-		let vm = this;
+                axios.get('http://localhost:5555/translations')
+                    .then(translation => {
+                        vm.words = words.map(w => {
+                            let t = translation.data[w.word_string]
+                                || translation.data[w.normalized_string]
+                                || translation.data[vm.capitalize(w.word_string)]
+                                || translation.data[vm.capitalize(w.normalized_string)];
+                            w.translation = t ? t.join(', ') : null
+                            w.sentence = null
+                            return w
+                        }).filter(w => w.translation).sort((a,b) =>  a.last_practiced_ms > b.last_practiced_ms ? -1 : 1)
+                    })
+            })
 	}
 };
 </script>
 
 <style lang='scss' scoped>
 .layout {
-	max-width: 600px;
+	max-width: 1000px;
 	margin: 0 auto;
+
+    .v-select__selections {
+        width: 200px;
+    }
 
 	.tab, a {
 		color : #78c800;
 	}
 	.word-container {
-		height: 60px;
-		margin: 10px;
+        transition: 0.3s ease;
+        min-height: 100px;
+        display:flex;
+        align-items:center;
+        border: 1px dashed #78c800;
+        cursor: pointer;
+        color: #555;
 
-		.word {
-			cursor: pointer;
-			font-weight: 400;
-			transition: 0.3s ease;
-			display:flex;
-			justify-content:space-between;
-			align-items: center;
-			padding: 15px;
+        p {
+            margin: 0;
+            display:inline-block;
+        }
 
-			h3,p {
-				display:inline-block;
-				margin: 0;
-			}
-
-			p {
-				color: #78c800;
-			}
+		.word h2 {
+            margin: 0;
+            display:inline-block;
+			font-weight: 600;
+            color: #78c800;
+            text-align:left;
+            padding-left: 30px;
 		}
 
 		&:hover {
-			.word {
+            max-height: 500px;
+            background:#78c800;
+            color: #fff;
+
+            p {
+                color: #fff;
+            }
+
+			.word h2 {
 				transform: scale(1.05);
-				color: #78c800;
+				color: #fff;
 				font-weight: 800;
 			}
 
-			.translation {
-				display:block;
+			.translation, .sentence {
+				opacity: 1;
+                transition: 0.3s ease;
 			}
 		}
 	}
 
-	.translation {
-		display: none;
-		text-align:center;
 
-		h3 {
-			padding: 10px 20px;
-			color: #fff;
-			background: #78c800;
-			text-align:center;
-			border-radius: 15px;
-			border: 2px solid #fff;
-			display:inline-block;
-		}
+	.translation, .sentence {
+        transition: 0.3s ease;
+        opacity: 0;
+		text-align:left;
+
+        p {
+            margin: 0;
+            line-height: 24px;
+            color:#fff;
+            font-weight: 400;
+            margin-left: 10px;
+        }
+        .highlighted {
+            font-weight: 600!important;
+        }
 	}
 }
 </style>

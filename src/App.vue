@@ -6,7 +6,7 @@
       dark
     >
       <div class="d-flex align-center text-center">
-        <h1>My Duolingo Words</h1>
+        <h2>My Duolingo Words</h2>
       </div>
 
       <v-spacer></v-spacer>
@@ -34,13 +34,23 @@ export default {
 };
 </script>
 
-<style lang='scss' scoped>
-body {
-    font-family: din-round,sans-serif!important;
+<style lang='scss' >
+body, #app {
+    font-family: din-round,'Lato',sans-serif!important;
+    background-color: #fff;
+
+    .v-application {
+        background-color: #fff;
+        a {
+            color: #78c800!important;
+        }
+    }
+    
 
     .v-toolbar__content {
-        max-width: 1200px;
+        max-width: 1000px;
         margin: 0 auto;
+        padding: 0 30px;
     }
 }
 </style>
