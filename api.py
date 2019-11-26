@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import duolingo
-port = 8080
+port = 8000
 
 app = Flask(__name__)
 CORS(app, resources={r'/*': {'origins': '*'}})
