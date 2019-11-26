@@ -122,11 +122,11 @@ export default {
 	mounted() {
         let vm = this;
         
-        axios.get('http://localhost:5555/words')
+        axios.get('/words')
             .then(res => {
                 var words = res.data.vocab_overview
 
-                axios.get('http://localhost:5555/translations')
+                axios.get('/translations')
                     .then(translation => {
                         vm.words = words.map(w => {
                             let t = translation.data[w.word_string]

@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import duolingo
+port = process.env.PORT or 5555
 
 app = Flask(__name__)
 CORS(app, resources={r'/*': {'origins': '*'}})
@@ -30,4 +31,4 @@ def translations():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5555)
+    app.run(host='0.0.0.0', port=port)
