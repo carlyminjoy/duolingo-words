@@ -3,14 +3,14 @@ from flask_cors import CORS
 import duolingo
 port = 8000
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='')
 CORS(app, resources={r'/*': {'origins': '*'}})
 
 lingo  = duolingo.Duolingo('Stingymingy', password='crystal0375')
 
 @app.route("/")
 def root():
-    return 'Hey'
+    return app.send_static_file('dist/index.html')
 
 @app.route("/user")
 def user():
@@ -31,4 +31,4 @@ def translations():
 
 
 if __name__ == '__main__':
-    app.run(host='duolingoapi.herokuapp.com/', port=port)
+    app.run(port=port)
