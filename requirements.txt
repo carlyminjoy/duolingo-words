@@ -1,0 +1,4 @@
+duolingo-api
+gunicorn
+flask
+flask_cors
