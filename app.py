@@ -10,7 +10,7 @@ lingo  = duolingo.Duolingo('Stingymingy', password='abcd1234')
 
 @app.route("/")
 def root():
-    return app.send_static_file('dist/index.html')
+    return app.send_static_file('/dist/index.html')
 
 @app.route("/user")
 def user():
