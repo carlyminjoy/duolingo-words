@@ -6,7 +6,7 @@ port = 8000
 app = Flask(__name__, static_url_path='')
 CORS(app, resources={r'/*': {'origins': '*'}})
 
-lingo  = duolingo.Duolingo('Stingymingy', password='crystal0375')
+lingo  = duolingo.Duolingo('Stingymingy', password='abcd1234')
 
 @app.route("/")
 def root():
