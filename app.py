@@ -3,7 +3,7 @@ from flask_cors import CORS
 import duolingo
 port = 8000
 
-app = Flask(__name__, static_url_path='/dist')
+app = Flask(__name__)
 CORS(app, resources={r'/*': {'origins': '*'}})
 
 lingo  = duolingo.Duolingo('Stingymingy', password='abcd1234')
